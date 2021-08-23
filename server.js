@@ -28,16 +28,16 @@ io.on('connection', socket => {
     handleSocket(socket);
 });
 
+keepRoutesFresh(io)
+
 async function handleSocket(socket) 
 {
-    keepRoutesFresh(socket)
-
     socket.on('addRoute', route => {
         setRoute(socket, route);
     });
 
-    socket.on('removeBus', route => {
-        deleteRoute(socket, route);
+    socket.on('cancelRoute', route_id => {
+        deleteRoute(socket, route_id);
     });
 }
 
@@ -46,18 +46,18 @@ function setRoute(socket, route){
     key = getRoomKey('default', `routes:${route.id}`);
     route = JSON.stringify(route);
     redisClient.set(key, route);
-    refreshRoutes()
+    refreshRoutes(socket)
 }
 
-function deleteRoute(socket, route){
-    key = getRoomKey('default', `routes:${route.id}`);
+function deleteRoute(socket, route_id){
+    key = getRoomKey('default', `routes:${route_id}`);
     redisClient.del(key);
-    refreshRoutes()
+    refreshRoutes(socket)
 }
 
 async function keepRoutesFresh(socket){
 
-    let secondsFresh = 5
+    let secondsFresh = 1
 
     setInterval(async function() {
 
@@ -70,12 +70,30 @@ async function keepRoutesFresh(socket){
 async function updateRoutes(){
     let freshRoutes = await getFreshRoutes()
 
-    console.log(freshRoutes);
+    freshRoutes.forEach(freshRoute => {
+
+        console.log(freshRoute);
+
+        if (freshRoute.status == "alive") {
+            freshRoute.current_location = freshRoute.data.routes[0].overview_path[freshRoute.current_step] || false
+
+            if (freshRoute.current_location == false) {
+                freshRoute.status = "done"
+                freshRoute.current_step = -1
+            } else {
+                freshRoute.current_step++
+            }
+            
+            key = getRoomKey('default', `routes:${freshRoute.id}`);
+            route = JSON.stringify(freshRoute);
+            redisClient.set(key, route);
+        }
+    });
 }
 
 async function refreshRoutes(socket){
     let freshRoutes = await getFreshRoutes()
-    socket.broadcast.emit('refreshRoutes', freshRoutes);
+    socket.emit('refreshRoutes', freshRoutes);
 }
 
 function getFreshRoutes(){
@@ -84,7 +102,6 @@ function getFreshRoutes(){
         redisClient.keys(pattern, function(err, keys) {  
             redisClient.mget(keys, function(err, routes) {
                 if (err) {
-                    console.log("Ainda não existem rotas cadastradas.");
                     resolve([]);
                 } else {
                     previousRoutes = routes.map(user => JSON.parse(user));
@@ -100,5 +117,5 @@ function getRoomKey(room, key) {
 }
 
 server.listen(3000, () => {
-    console.log('Server started at 3000');
+    console.log('Server started at port 3000');
 });

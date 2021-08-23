@@ -19,14 +19,13 @@ cyan="\e[1m\e[36m###\e[0m"
 
 app(){
     log "Go to: http://localhost:$app_port/"
-    # run="docker-compose run -d --rm --name=$app_name --p=$app_port:3000 app"
-    run="docker-compose run --rm --name=$app_name --p=$app_port:3000 app"
+    run="docker-compose run -d --rm --name=$app_name --p=$app_port:3000 app"
+    # run="docker-compose run --rm --name=$app_name --p=$app_port:3000 app"
     runit
 }
 
 redis(){
-    # run="docker-compose run -d --rm --name=redis-app redis"
-    run="docker-compose run --rm --name=redis-app redis"
+    run="docker-compose run -d --rm --name=redis-app redis"
     runit
 }
 
