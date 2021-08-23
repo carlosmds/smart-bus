@@ -1,5 +1,6 @@
-https://www.youtube.com/watch?v=BkGtNBrOhKU
-https://www.youtube.com/watch?v=JhgBwJn1bQw
+# smart-bus
+
+This is a socket application for real time bus tracking. It is an university project where we were required to build something related to smart cities.
 
 https://www.npmjs.com/package/websocket-vs-socket.io
 https://github.com/JVictorDias
